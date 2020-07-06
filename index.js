@@ -2,9 +2,6 @@ var app = require('express')();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 var rethink = require('rethinkdb');
-if (process.env.NODE_ENV !== 'production') {
-    require('dotenv').config();
-}
 
 const rdbHost = process.env.RETHINKDB_HOST;
 const rdbPort = process.env.RETHINKDB_PORT;
