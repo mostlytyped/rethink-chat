@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket.IO chat</title>
+    <link href="/css/main.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div id="app">
+        <ul id="chatlog">
+            <li v-for="chat in chats">
+                <span class="timestamp">
+                    {{ new Date(chat.ts).toLocaleString(undefined, {dateStyle: 'short', timeStyle: 'short'}) }}
+                </span>
+                <span class="user">{{ chat.user }}:</span>
+                <span class="msg">{{ chat.msg }}</span>
+            </li>
+        </ul>
+        <label id="username">Username:
+            <input v-model="username" placeholder="alephone" />
+        </label>
+        <form v-on:submit.prevent="sendMessage">
+            <input v-model="message" autocomplete="off" />
+            <button>Send</button>
+        </form>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="/js/app.js" language="javascript"></script>
+</body>
+
+</html>

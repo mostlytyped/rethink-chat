@@ -1,4 +1,5 @@
-var app = require('express')();
+var express = require('express');
+const app = express();
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 var rethink = require('rethinkdb');
@@ -14,9 +15,7 @@ const listenPort = process.env.PORT || "3000";
 rethink.connect({ host: rdbHost, port: rdbPort, username: rdbUser, password: rdbPass, db: rdbName }, function (err, conn) {
     if (err) throw err;
 
-    app.get('/', (req, res) => {
-        res.sendFile(__dirname + '/index.html');
-    });
+    app.use(express.static('public'));
 
     app.get('/chats', (req, res) => {
         rethink.table('chats').orderBy('ts').run(conn, (err, cursor) => {
@@ -31,7 +30,6 @@ rethink.connect({ host: rdbHost, port: rdbPort, username: rdbUser, password: rdb
     rethink.table('chats').changes().run(conn, (err, cursor) => {
         if (err) throw err;
         cursor.each((err, row) => {
-            console.log(row.new_val);
             io.emit('chat message', row.new_val);
         });
     });
