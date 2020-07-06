@@ -1,11 +1,9 @@
 var rethink = require('rethinkdb');
 
 var express = require('express');
-var history = require('connect-history-api-fallback');
 var morgan = require('morgan')
 const app = express();
 app.use(morgan('combined'))
-app.use(history());
 
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);

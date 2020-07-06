@@ -14,8 +14,10 @@ rethink.connect({ host: rdbHost, port: rdbPort, username: rdbUser, password: rdb
     if (err) throw err;
 
 
-    rethink.tableCreate('chats').run(conn, (err, result) => {
-        console.log(err.msg, result);
-        conn.close();
+    rethink.tableDrop('chats').run(conn, () => {
+        rethink.tableCreate('chats').run(conn, (err, result) => {
+            console.log(err, result);
+            conn.close();
+        });
     });
 });

@@ -87,8 +87,7 @@ const routes = [
     { path: '/:roomId', name: 'room', component: RoomView },
 ];
 const router = new VueRouter({
-    mode: 'history',
-    routes: routes,
+    routes
 })
 
 var socket = io();
