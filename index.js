@@ -1,8 +1,14 @@
+var rethink = require('rethinkdb');
+
 var express = require('express');
+var history = require('connect-history-api-fallback');
+var morgan = require('morgan')
 const app = express();
+app.use(morgan('combined'))
+app.use(history());
+
 var http = require('http').createServer(app);
 var io = require('socket.io')(http);
-var rethink = require('rethinkdb');
 
 const rdbHost = process.env.RETHINKDB_HOST;
 const rdbPort = process.env.RETHINKDB_PORT;
@@ -15,36 +21,55 @@ const listenPort = process.env.PORT || "3000";
 rethink.connect({ host: rdbHost, port: rdbPort, username: rdbUser, password: rdbPass, db: rdbName }, function (err, conn) {
     if (err) throw err;
 
+    const watchedQueries = {};
+
     app.use(express.static('public'));
 
-    app.get('/chats', (req, res) => {
-        rethink.table('chats').orderBy('ts').run(conn, (err, cursor) => {
+    app.get('/db/:table', (req, res) => {
+        let query = rethink.table(req.params.table);
+        let orderBy = req.query.orderBy;
+        let order = req.query.order;
+        delete req.query.orderBy;
+        delete req.query.order;
+        query = query.filter(req.query);
+        let orderedQuery = query;
+        if (orderBy) {
+            if (order === 'desc') {
+                orderBy = rethink.desc(orderBy);
+            } else {
+                orderBy = rethink.asc(orderBy);
+            }
+            orderedQuery = query.orderBy(orderBy);
+        }
+        orderedQuery.run(conn, (err, cursor) => {
             if (err) throw err;
             cursor.toArray((err, result) => {
                 if (err) throw err;
-                res.json(result);
+                res.json({
+                    data: result,
+                    handle: handle
+                });
             })
         });
+        const handle = req.params.table + '/' + Object.entries(req.query).map(e => e.join('=')).join('/');
+        if (!watchedQueries[handle]) {
+            query.changes().run(conn, (err, cursor) => {
+                if (err) throw err;
+                cursor.each((err, row) => {
+                    if (row.new_val) {
+                        io.emit(handle, row.new_val);
+                    }
+                });
+            });
+            watchedQueries[handle] = true;
+        }
     })
 
-    rethink.table('chats').changes().run(conn, (err, cursor) => {
-        if (err) throw err;
-        cursor.each((err, row) => {
-            io.emit('chat message', row.new_val);
-        });
-    });
-
     io.on('connection', (socket) => {
-        console.log('a user connected');
-
-        socket.on('chat message', (msg) => {
-            rethink.table('chats').insert({ msg: msg.msg, user: msg.user, ts: Date.now() }).run(conn, function (err, res) {
+        socket.on('chats', (msg) => {
+            rethink.table('chats').insert(Object.assign(msg, { ts: Date.now() })).run(conn, function (err, res) {
                 if (err) throw err;
             });
-        });
-
-        socket.on('disconnect', () => {
-            console.log('user disconnected');
         });
     });
 

@@ -32,6 +32,7 @@ rethink.connect({ host: rdbHost, port: rdbPort, username: rdbUser, password: rdb
                 rethink.table('chats').insert({
                     user: 'lorem',
                     msg: lorem.generateWords(num),
+                    roomId: row.new_val.roomId,
                     ts: Date.now(),
                 }).run(conn, function (err, res) {
                     if (err) throw err;
