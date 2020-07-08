@@ -14,7 +14,7 @@ const listenPort = process.env.PORT || "5000";
     const conn = await rethink.connect({ host: rdbHost, port: rdbPort, username: rdbUser, password: rdbPass, db: rdbName });
 
     const app = express();
-    app.use(express.static('frontend/dist'));
+    app.use(express.static('node_modules/chatapp/dist'));
     const http = require('http').createServer(app);
 
     const graphqlServer = new ApolloServer({
